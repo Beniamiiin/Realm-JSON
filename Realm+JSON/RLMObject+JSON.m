@@ -184,14 +184,20 @@ static NSInteger const kCreateBatchSize = 100;
                 }
 			}
 			else if ([propertyClass isSubclassOfClass:[RLMArray class]]) {
-                RLMProperty *property = [self mc_propertyForPropertyKey:objectKeyPath];
-                Class elementClass = [RLMSchema classForString: property.objectClassName];
+                NSValueTransformer *transformer = [[self class] mc_transformerForPropertyKey:objectKeyPath];
                 
-                NSMutableArray *array = [NSMutableArray array];
-                for (id item in(NSArray*) value) {
-                    [array addObject:[elementClass mc_createObjectFromJSONDictionary:item]];
+                if (transformer) {
+                    value = [transformer transformedValue:value];
+                } else {
+                    RLMProperty *property = [self mc_propertyForPropertyKey:objectKeyPath];
+                    Class elementClass = [RLMSchema classForString: property.objectClassName];
+                    
+                    NSMutableArray *array = [NSMutableArray array];
+                    for (id item in(NSArray*) value) {
+                        [array addObject:[elementClass mc_createObjectFromJSONDictionary:item]];
+                    }
+                    value = [array copy];
                 }
-                value = [array copy];
 			}
 			else {
 				NSValueTransformer *transformer = [[self class] mc_transformerForPropertyKey:objectKeyPath];
